@@ -69,7 +69,7 @@ Jika ingin mencoba aplikasi ini **tanpa menginstal apapun**, bisa jalankan langs
 ├── steg/
 │   ├── encoder.py          # Fungsi untuk encode J-STEG
 │   └── decoder.py          # Fungsi untuk decode J-STEG
-├── output/           # Folder hasil output encode/decode
+├── output/                 # Folder hasil output encode/decode
 ├── requirements.txt        # Daftar dependensi Python
 └── README.md               # Dokumentasi ini
 ```
