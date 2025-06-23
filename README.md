@@ -17,8 +17,6 @@ Aplikasi ini dikembangkan menggunakan **Streamlit** untuk melakukan proses stega
 
 > **J-STEG** adalah algoritma steganografi untuk format JPEG yang bekerja dengan menyisipkan bit pesan ke dalam **bit paling tidak signifikan (LSB)** dari koefisien DCT JPEG, **hanya pada nilai yang ≠ 0 dan ≠ ±1**. Karena hanya mengubah bit LSB, gambar hasil stego tampak **sama seperti aslinya** bagi mata manusia.
 
-Tentu! Berikut adalah versi yang telah diperbarui dari bagian **Cara Menjalankan Aplikasi**, dengan tambahan informasi bahwa aplikasi juga bisa dijalankan langsung di **Streamlit Cloud** (Streamlit Community Cloud) jika diunggah ke GitHub.
-
 ---
 
 ### 🚀 Cara Menjalankan Aplikasi
@@ -28,7 +26,7 @@ Tentu! Berikut adalah versi yang telah diperbarui dari bagian **Cara Menjalankan
 1. **Clone repository** ini:
 
    ```bash
-   git clone https://github.com/nama-anda/jsteg-streamlit.git
+   git clone https://github.com/rifkyadiii/Steganography_Algorithm.git
    cd jsteg-streamlit
    ```
 
