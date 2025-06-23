@@ -27,6 +27,9 @@ Aplikasi ini dikembangkan menggunakan **Streamlit** untuk melakukan proses stega
 
    ```bash
    git clone https://github.com/rifkyadiii/Steganography_Algorithm.git
+   ```
+
+   ```bash
    cd jsteg-streamlit
    ```
 
