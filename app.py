@@ -32,8 +32,8 @@ if menu == "🔐 Encode":
     st.header("🔐 Encode - Sisipkan Pesan ke Gambar JPEG")
 
     uploaded = st.file_uploader("Unggah Gambar JPEG", type=["jpg", "jpeg"])
-    message_to_embed = st.text_area(
-        "Masukkan Pesan Rahasia (maks 500 karakter)",
+    message = st.text_area(
+        "Masukkan Pesan Rahasia",
         max_chars=500,
         help="Ketik pesan yang ingin Anda sembunyikan. Maksimum 500 karakter.",
         placeholder="Contoh: Ini adalah pesan rahasia saya!"
