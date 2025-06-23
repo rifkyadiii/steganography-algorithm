@@ -4,7 +4,7 @@ import numpy as np
 def str_to_bits(s):
     return [int(b) for c in s for b in f"{ord(c):08b}"]
 
-def embed_jsteg(img_path, message, out_path="stego_output/encoded.jpg"):
+def embed_jsteg(img_path, message, out_path="output/encoded.jpg"):
     jpg = jio.read(img_path)
     coeffs = jpg.coef_arrays[0]
     bits = str_to_bits(message) + [0] * 8  # null terminator

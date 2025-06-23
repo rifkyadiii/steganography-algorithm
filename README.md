@@ -65,8 +65,8 @@ Jika ingin mencoba aplikasi ini **tanpa menginstal apapun**, bisa jalankan langs
 ├── app.py                  # Aplikasi utama Streamlit
 ├── steg/
 │   ├── encoder.py          # Fungsi untuk encode J-STEG
-│   ├── decoder.py          # Fungsi untuk decode J-STEG
-├── stego_output/           # Folder hasil output encode/decode
+│   └── decoder.py          # Fungsi untuk decode J-STEG
+├── output/           # Folder hasil output encode/decode
 ├── requirements.txt        # Daftar dependensi Python
 └── README.md               # Dokumentasi ini
 ```

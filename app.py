@@ -8,7 +8,7 @@ st.set_page_config(page_title="J-STEG Steganografi", page_icon="🖼️")
 st.title("🖼️ J-STEG Steganografi")
 
 # Gunakan folder output terpisah
-OUTPUT_DIR = "stego_output"
+OUTPUT_DIR = "output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ===== Sidebar =====
