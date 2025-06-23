@@ -54,7 +54,7 @@ Aplikasi ini dikembangkan menggunakan **Streamlit** untuk melakukan proses stega
 
 Jika ingin mencoba aplikasi ini **tanpa menginstal apapun**, bisa jalankan langsung secara online melalui **Streamlit Cloud**:
 
-👉 [Link Streamlit](https://share.streamlit.io/nama-anda/jsteg-streamlit/main/app.py)
+👉 [Link Streamlit](https://steganography-uas-sismul.streamlit.app/)
 
 ---
 
