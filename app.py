@@ -1,132 +1,127 @@
-import streamlit as st
-from steg.encoder import embed_jsteg, str_to_bits
-from steg.decoder import extract_bits_from_image, bits_to_str
+# app.py
+
 import os
+# --- PERUBAHAN DI SINI ---
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for, session
+from werkzeug.utils import secure_filename
+import jsteg
+import jpegio as jio
 
-# Konfigurasi awal
-st.set_page_config(page_title="J-STEG Steganografi", page_icon="🖼️")
-st.title("🖼️ J-STEG Steganografi")
+# Konfigurasi Flask
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg'}
 
-# Gunakan folder output terpisah
-OUTPUT_DIR = "output"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.secret_key = 'super-secret-key-change-me' 
 
-# ===== Sidebar =====
-with st.sidebar:
-    st.markdown("## Apa itu J-STEG❓❓")
-    st.markdown(
-        """
-        **J-STEG** (JPEG Steganography) adalah teknik penyisipan pesan rahasia ke dalam gambar **JPEG** dengan cara memodifikasi **bit LSB** dari koefisien DCT yang tidak nol dan bukan ±1.
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-        Bit pesan disisipkan secara tersembunyi tanpa mengubah tampilan gambar.
+@app.route('/')
+def index():
+    results = {
+        'active_tab': session.pop('active_tab', 'encode'),
+        'success_encode': session.pop('success_encode', False),
+        'encoded_image': session.pop('encoded_image', None),
+        'binary_before': session.pop('binary_before', None),
+        'error_encode': session.pop('error_encode', None),
+        'success_decode': session.pop('success_decode', False),
+        'decoded_message': session.pop('decoded_message', None),
+        'binary_message_part': session.pop('binary_message_part', None),
+        'binary_extracted_full': session.pop('binary_extracted_full', None),
+        'error_decode': session.pop('error_decode', None)
+    }
+    return render_template('index.html', **results)
 
-        ---
-        """
-    )
-    menu = st.radio("📂 Pilih Mode", ["🔐 Encode", "🔎 Decode"])
+@app.route('/encode', methods=['POST'])
+def encode_route():
+    session['active_tab'] = 'encode'
 
-# =======================================
-#                ENCODE
-# =======================================
-if menu == "🔐 Encode":
-    st.header("🔐 Encode - Sisipkan Pesan ke Gambar JPEG")
+    if 'image' not in request.files or 'message' not in request.form:
+        session['error_encode'] = "Form tidak lengkap!"
+        return redirect(url_for('index'))
+    
+    file = request.files['image']
+    message = request.form['message']
+    password = request.form.get('password')
 
-    uploaded = st.file_uploader("Unggah Gambar JPEG", type=["jpg", "jpeg"])
-    message = st.text_area(
-        "Masukkan Pesan Rahasia (maks 500 karakter)",
-        max_chars=500,
-        help="Ketik pesan yang ingin Anda sembunyikan. Maksimum 500 karakter.",
-        placeholder="Contoh: Ini adalah pesan rahasia saya!"
-    )
-    encode_btn = st.button("🔧 Encode Gambar")
+    if file.filename == '':
+        session['error_encode'] = "Tidak ada gambar yang dipilih!"
+        return redirect(url_for('index'))
 
-    if uploaded and message and encode_btn:
-        if len(message) > 500:
-            st.error("⚠️ Pesan terlalu panjang. Maksimum 500 karakter.")
-        else:
-            original_path = os.path.join(OUTPUT_DIR, "original.jpg")
-            with open(original_path, "wb") as f:
-                f.write(uploaded.read())
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(input_path)
 
-            try:
-                bits = str_to_bits(message) + [0]*8
-                bit_str = ''.join(map(str, bits))
-                stego_path = os.path.join(OUTPUT_DIR, "encoded.jpg")
-                embed_jsteg(original_path, message, out_path=stego_path)
-
-                st.success("✅ Proses encode berhasil!")
-                st.markdown("### 🔢 Bit yang Disisipkan:")
-                st.caption(f"Total: {len(bits)} bit")
-                st.code(bit_str, language="text")
-
-                with open(stego_path, "rb") as f:
-                    st.download_button("⬇️ Unduh Gambar Stego", f, file_name="stego.jpg", mime="image/jpeg")
-
-            except Exception as e:
-                st.error(f"❌ Terjadi kesalahan saat encode: {e}")
-
-    elif encode_btn:
-        st.warning("⚠️ Mohon unggah gambar dan isi pesan terlebih dahulu.")
-
-# =======================================
-#                DECODE
-# =======================================
-elif menu == "🔎 Decode":
-    st.header("🔎 Decode - Ekstrak Pesan dari Gambar Stego")
-
-    uploaded = st.file_uploader("Unggah Gambar JPEG Hasil Stego", type=["jpg", "jpeg"])
-    decode_btn = st.button("🔍 Decode Pesan")
-
-    if uploaded and decode_btn:
         try:
-            stego_input = os.path.join(OUTPUT_DIR, "uploaded_stego.jpg")
-            with open(stego_input, "wb") as f:
-                f.write(uploaded.read())
-
-            bits = extract_bits_from_image(stego_input)
-
-            # Fungsi deteksi null terminator
-            def find_null_terminator_index(bits):
-                for i in range(0, len(bits), 8):
-                    byte = bits[i:i+8]
-                    if len(byte) < 8:
-                        break
-                    if all(b == 0 for b in byte):
-                        return i + 8
-                return len(bits)
-
-            end_idx = find_null_terminator_index(bits)
-            pesan_bits = bits[:end_idx]
-            tambahan_bits = bits[end_idx:]
-
-            pesan_bit_str = ''.join(map(str, pesan_bits))
-            tambahan_bit_str = ''.join(map(str, tambahan_bits))
-
-            # Tampilkan bit dengan highlight warna
-            def chunk_string(s, chunk_size=1000):
-                return [s[i:i+chunk_size] for i in range(0, len(s), chunk_size)]
-
-            # Potong bit menjadi potongan kecil
-            highlighted_html = ""
-            for chunk in chunk_string(pesan_bit_str):
-                highlighted_html += f"<span style='color:limegreen;font-weight:bold'>{chunk}</span>"
-
-            for chunk in chunk_string(tambahan_bit_str):
-                highlighted_html += f"<span style='color:gray'>{chunk}</span>"
-
-            message = bits_to_str(bits)
-
-            st.success("✅ Pesan berhasil diekstrak dari gambar!")
-
-            st.markdown("### 📩 Pesan Tersembunyi:")
-            st.code(message, language="text")
-
-            st.markdown("### 🔢 Bit yang Ditemukan:")
-            st.caption(f"Bit pesan: {len(pesan_bits)} | Total bit dibaca: {len(bits)}")
-            st.markdown(highlighted_html, unsafe_allow_html=True)
+            binary_before_message = jsteg.message_to_binary(message)
+            stego_jpeg, _ = jsteg.encode(input_path, message, password)
+            
+            output_filename = 'stego_' + filename
+            output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+            jio.write(stego_jpeg, output_path)
+            
+            session['success_encode'] = True
+            session['encoded_image'] = output_filename
+            session['binary_before'] = binary_before_message
+            return redirect(url_for('index'))
 
         except Exception as e:
-            st.error(f"❌ Terjadi kesalahan saat decode: {e}")
+            session['error_encode'] = f"Terjadi kesalahan: {e}"
+            return redirect(url_for('index'))
+    
+    session['error_encode'] = "Format file tidak didukung. Gunakan .jpg atau .jpeg."
+    return redirect(url_for('index'))
 
-    elif decode_btn:
-        st.warning("⚠️ Mohon unggah gambar hasil stego terlebih dahulu.")
+@app.route('/decode', methods=['POST'])
+def decode_route():
+    session['active_tab'] = 'decode'
+
+    if 'image' not in request.files:
+        session['error_decode'] = "Tidak ada gambar yang dipilih!"
+        return redirect(url_for('index'))
+    
+    file = request.files['image']
+    password = request.form.get('password_decode')
+
+    if file.filename == '':
+        session['error_decode'] = "Tidak ada gambar yang dipilih!"
+        return redirect(url_for('index'))
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(input_path)
+
+        try:
+            decoded_message, binary_message_part, binary_extracted_full = jsteg.decode(input_path, password)
+            
+            if not decoded_message:
+                session['error_decode'] = "Tidak ada pesan tersembunyi yang ditemukan atau password salah."
+                return redirect(url_for('index'))
+
+            session['success_decode'] = True
+            session['decoded_message'] = decoded_message
+            session['binary_message_part'] = binary_message_part
+            session['binary_extracted_full'] = binary_extracted_full
+            return redirect(url_for('index'))
+
+        except Exception as e:
+            session['error_decode'] = f"Gagal mendekode: {e}"
+            return redirect(url_for('index'))
+
+    session['error_decode'] = "Format file tidak didukung."
+    return redirect(url_for('index'))
+
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+if __name__ == '__main__':
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
+    app.run(debug=True)

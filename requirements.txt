@@ -1,3 +1,4 @@
-jpegio==0.2.8
-numpy==2.3.1
-streamlit==1.43.0
+Flask
+numpy
+jpegio
+werkzeug

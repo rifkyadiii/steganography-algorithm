@@ -1,11 +1,10 @@
-__pycache__/
-**/__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.db
-*.sqlite3
-*.log
+# Abaikan semua folder virtual environment bernama 'venv'
+**/venv/
 venv/
-.env/
-.envrc
+
+# Abaikan semua folder cache Python
+**/__pycache__/
+__pycache__/
+
+# Opsional: Abaikan file cache Python
+*.py[cod]

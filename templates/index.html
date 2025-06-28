@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>J-Steg Steganography</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 800px; }
+        .card { margin-top: 20px; }
+        .binary-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            flex-grow: 1; /* Biarkan text area tumbuh */
+        }
+        .highlight { color: #198754; font-weight: bold; }
+        /* --- PERUBAHAN DI SINI: Gunakan Flexbox untuk layout tombol copy --- */
+        .binary-container {
+            display: flex;
+            align-items: flex-start; /* Sejajarkan item di atas */
+            gap: 10px; /* Jarak antara text area dan tombol */
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <div class="text-center mb-4">
+            <h2>Steganografi Algoritma J-Steg</h2>
+            <p class="lead">Sembunyikan atau ekstrak pesan dari gambar JPEG.</p>
+        </div>
+
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="encode-tab" data-bs-toggle="tab" data-bs-target="#encode-tab-pane" type="button" role="tab">Sisipkan Pesan (Encode)</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="decode-tab" data-bs-toggle="tab" data-bs-target="#decode-tab-pane" type="button" role="tab">Ekstrak Pesan (Decode)</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade" id="encode-tab-pane" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <form action="/encode" method="post" enctype="multipart/form-data">
+                            <div class="mb-3"><label for="imageEncode" class="form-label">Upload Gambar (.jpg/.jpeg)</label><input class="form-control" type="file" name="image" id="imageEncode" required></div>
+                            <div class="mb-3"><label for="message" class="form-label">Pesan Rahasia</label><textarea class="form-control" name="message" id="message" rows="3" required></textarea></div>
+                            <div class="mb-3"><label for="password" class="form-label">Password (Opsional)</label><input type="password" class="form-control" name="password" id="password" placeholder="Kosongkan jika tidak pakai"></div>
+                            <button type="submit" class="btn btn-primary w-100">Sisipkan Pesan</button>
+                        </form>
+                    </div>
+                </div>
+                {% if success_encode %}
+                <div class="card mt-4"><div class="card-header"><h4>Hasil Enkripsi</h4></div>
+                    <div class="card-body">
+                        <div class="alert alert-success">Pesan berhasil disisipkan!</div>
+                        <a href="{{ url_for('uploaded_file', filename=encoded_image) }}" class="btn btn-dark w-100 mb-3" download><i class="bi bi-download"></i> Download Gambar Stego</a><hr>
+                        <strong>Biner Pesan Asli:</strong>
+                        <div class="binary-container">
+                             <div class="binary-display">{{ binary_before }}</div>
+                             <button type="button" class="btn btn-outline-secondary btn-copy" title="Copy to clipboard"><i class="bi bi-clipboard"></i></button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if error_encode %} <div class="alert alert-danger mt-3">{{ error_encode }}</div> {% endif %}
+            </div>
+
+            <div class="tab-pane fade" id="decode-tab-pane" role="tabpanel">
+                <div class="card">
+                     <div class="card-body">
+                        <form action="/decode" method="post" enctype="multipart/form-data">
+                            <div class="mb-3"><label for="imageDecode" class="form-label">Upload Gambar Stego (.jpg/.jpeg)</label><input class="form-control" type="file" name="image" id="imageDecode" required></div>
+                            <div class="mb-3"><label for="password_decode" class="form-label">Password</label><input type="password" class="form-control" name="password_decode" id="password_decode" placeholder="Masukkan jika diset saat encode"></div>
+                            <button type="submit" class="btn btn-success w-100">Ekstrak Pesan</button>
+                        </form>
+                    </div>
+                </div>
+                {% if success_decode %}
+                <div class="card mt-4"><div class="card-header"><h4>Hasil Dekripsi Sukses</h4></div>
+                    <div class="card-body">
+                        <div class="alert alert-success"><strong>Pesan Ditemukan:</strong><p class="mt-2" style="white-space: pre-wrap;">{{ decoded_message }}</p></div><hr>
+                        <strong>Biner Lengkap yang Diekstrak (Bagian pesan di-highlight):</strong>
+                        <div class="binary-container">
+                            <div class="binary-display"><span class="highlight">{{ binary_message_part }}</span><span>{{ binary_extracted_full[binary_message_part|length:] }}</span></div>
+                            <button type="button" class="btn btn-outline-secondary btn-copy" title="Copy to clipboard"><i class="bi bi-clipboard"></i></button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if error_decode %} 
+                <div class="card mt-4"><div class="card-header"><h4>Hasil Dekripsi Gagal</h4></div>
+                    <div class="card-body">
+                        <div class="alert alert-danger">{{ error_decode }}</div>
+                        {% if binary_extracted_full %}
+                        <hr><strong>Data Biner Mentah yang berhasil diekstrak dari gambar:</strong>
+                        <div class="binary-container">
+                            <div class="binary-display">{{ binary_extracted_full }}</div>
+                            <button type="button" class="btn btn-outline-secondary btn-copy" title="Copy to clipboard"><i class="bi bi-clipboard"></i></button>
+                        </div>
+                        <small class="form-text text-muted">Data di atas adalah representasi biner mentah dari gambar. Pesan tidak dapat diurai karena password salah atau data rusak.</small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Logika untuk Tombol Copy
+            const copyButtons = document.querySelectorAll('.btn-copy');
+            copyButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const container = this.closest('.binary-container');
+                    const binaryDisplay = container.querySelector('.binary-display');
+                    navigator.clipboard.writeText(binaryDisplay.innerText).then(() => {
+                        const originalIcon = this.innerHTML;
+                        this.innerHTML = '<i class="bi bi-check-lg"></i>';
+                        setTimeout(() => { this.innerHTML = originalIcon; }, 2000);
+                    }).catch(err => { console.error('Gagal menyalin teks: ', err); });
+                });
+            });
+
+            // Logika untuk Menyimpan dan Memuat Posisi Tab
+            const tabButtons = document.querySelectorAll('button[data-bs-toggle="tab"]');
+            tabButtons.forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(event) {
+                    localStorage.setItem('activeTab', event.target.id);
+                });
+            });
+
+            // Muat tab dari session (setelah POST) atau localStorage (setelah refresh)
+            let activeTabId = "{{ session.pop('active_tab_on_load', '') or '' }}";
+            if (activeTabId) {
+                localStorage.setItem('activeTab', activeTabId);
+            }
+            
+            const lastActiveTabId = localStorage.getItem('activeTab');
+            if (lastActiveTabId) {
+                const tabToActivate = document.querySelector('#' + lastActiveTabId);
+                if (tabToActivate) {
+                    new bootstrap.Tab(tabToActivate).show();
+                }
+            } else {
+                // Default ke tab pertama jika tidak ada yang tersimpan
+                new bootstrap.Tab(document.querySelector('#encode-tab')).show();
+            }
+        });
+    </script>
+</body>
+</html>
