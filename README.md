@@ -4,12 +4,6 @@ Sebuah aplikasi web sederhana yang dibangun dengan Python dan Flask untuk menyis
 
 Aplikasi ini dirancang untuk menjadi ringan dan kompatibel dengan platform hosting modern yang menggunakan *ephemeral filesystem* (penyimpanan non-permanen) dengan memproses semua gambar sepenuhnya di dalam memori.
 
-## 🚀 Live Demo
-
-Aplikasi ini telah di-deploy menggunakan PythonAnywhere dan dapat diakses secara publik. Silakan coba langsung melalui link di bawah ini:
-
-**[https://rifkyadiii.pythonanywhere.com/](https://rifkyadiii.pythonanywhere.com/)**
-
 ---
 
 ## Tampilan Aplikasi (Screenshot)
@@ -107,3 +101,4 @@ Untuk menjalankan aplikasi ini di komputer Anda, ikuti langkah-langkah berikut:
     - Jika gambar tersebut diproteksi, masukkan password yang benar.
     - Klik tombol "Ekstrak Pesan".
     - Jika berhasil, pesan yang ditemukan akan ditampilkan beserta data binernya. Jika gagal (misal: password salah), pesan error yang informatif akan muncul.
+
